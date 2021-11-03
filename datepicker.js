@@ -42,6 +42,7 @@ class DatePicker extends Component {
     this.onPressCancel = this.onPressCancel.bind(this);
     this.onPressConfirm = this.onPressConfirm.bind(this);
     this.onDateChange = this.onDateChange.bind(this);
+    this.onDateChangeAndroid = this.onDateChangeAndroid.bind(this);
     this.onPressMask = this.onPressMask.bind(this);
     this.onDateOrTimePicked = this.onDateOrTimePicked.bind(this);
     this.onDatetimePicked = this.onDatetimePicked.bind(this);
@@ -208,7 +209,20 @@ class DatePicker extends Component {
     }, 200);
   }
 
-  onDateOrTimePicked(event, date) {
+  onDateChangeAndroid(event, date) {
+    const {mode} = this.props;
+    if(mode !== 'datetime') {
+      this.onDateOrTimePicked(date)
+    }
+    else if (this.state.androidDatePickerVisible) {
+      this.onDatetimePicked(date)
+    }
+    else if (this.state.androidTimePickerVisible) {
+      this.onDatetimeTimePicked(date)
+    }
+  }
+
+  onDateOrTimePicked(date) {
     this.setAndroidDatePickerVisible(false);
     this.setAndroidTimePickerVisible(false);
     if (date === undefined) {
@@ -221,7 +235,7 @@ class DatePicker extends Component {
     }
   }
 
-  onDatetimePicked(event, date) {
+  onDatetimePicked(date) {
     const newDate = Moment(date);
     const now = Moment();
     newDate.set({hour: now.hours(), minute: now.minutes(), second: now.seconds(), millisecond: now.milliseconds()})
@@ -237,7 +251,7 @@ class DatePicker extends Component {
     }
   }
 
-  onDatetimeTimePicked(event, date) {
+  onDatetimeTimePicked(date) {
     const newDate = Moment(date);
     const dateToSave = Moment(this.state.date);
     dateToSave.set({hour: newDate.hours(), minute: newDate.minutes(), second: newDate.seconds(), millisecond: newDate.milliseconds()})
@@ -424,45 +438,17 @@ class DatePicker extends Component {
               </TouchableComponent>
             </View>
           </Modal>}
-
-          {(androidTimePickerVisible && Platform.OS === 'android' && mode === 'time') ? 
+          
+          {Platform.OS === 'android' && (androidDatePickerVisible || androidTimePickerVisible) ?
             <RNDateTimePicker 
-              mode="time"
+              mode={androidDatePickerVisible ? "date" : (androidTimePickerVisible ? "time" : undefined)}
               display={androidMode}
               is24Hour={is24Hour}
+              minimumDate={androidDatePickerVisible && minDate ? this.getDate(minDate) : undefined} 
+              maximumDate={androidDatePickerVisible && maxDate ? this.getDate(maxDate) : undefined} 
               value={this.state.date} 
               locale={locale}
-              onChange={this.onDateOrTimePicked}/> : null}
-
-          {(androidDatePickerVisible && Platform.OS === 'android' && mode === 'date') ? 
-            <RNDateTimePicker 
-              mode="date" 
-              display={androidMode}
-              is24Hour={is24Hour}
-              minimumDate={minDate && this.getDate(minDate)} 
-              maximumDate={maxDate && this.getDate(maxDate)} 
-              value={this.state.date} 
-              locale={locale}
-              onChange={this.onDateOrTimePicked}/> : null}
-
-          {(androidDatePickerVisible && Platform.OS === 'android' && mode === 'datetime') ? 
-            <RNDateTimePicker 
-              mode="date" 
-              display={androidMode}
-              minimumDate={minDate && this.getDate(minDate)} 
-              maximumDate={maxDate && this.getDate(maxDate)} 
-              value={this.state.date} 
-              locale={locale}
-              onChange={this.onDatetimePicked}/> : null}
-
-          {(androidTimePickerVisible && Platform.OS === 'android' && mode === 'datetime') ? 
-            <RNDateTimePicker 
-              mode="time" 
-              display={androidMode}
-              is24Hour={is24Hour}
-              value={this.state.date} 
-              locale={locale}
-              onChange={this.onDatetimeTimePicked}/> : null}
+              onChange={this.onDateChangeAndroid}/> : null}
 
         </View>
       </TouchableComponent>
